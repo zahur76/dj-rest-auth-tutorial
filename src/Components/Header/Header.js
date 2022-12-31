@@ -6,6 +6,7 @@ import Article from '../Article/Article';
 import Modal from 'react-bootstrap/Modal';
 import { useEffect, useState } from 'react';
 import SignIn from '../SignIn/Signin';
+import GetUser from '../SignIn/Getuser';
 
 function Header() {
 
@@ -15,19 +16,18 @@ function Header() {
     const handleShow = () => setShow(true);
 
     // handle login    
-    let login  = SignIn()
 
     const [username, setUsername] = useState(null)
     const [password, setPassword] = useState(null)
-    const [token, setToken] = useState(null)
+    const [token, setToken] = useState(SignIn())
+    const [user, setUser] = useState(GetUser())
+ 
 
     const handleUsername = (event) => {
-        console.log(event.target.value)
         setUsername(event.target.value)
     }
 
     const handlePassword = (event) => {
-        console.log(event.target.value)
         setPassword(event.target.value)
     }
 
@@ -39,27 +39,52 @@ function Header() {
             'password': password,
         }
     
-        fetch("http://127.0.0.1:8000/dj-rest-auth/login/", {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(data)}).then(async response => {
+        fetch("http://127.0.0.1:8000/api/token/", {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(data)}).then(async response => {
             const data = await response.json();
             // check for error response
             if (!response.ok) {
-                // get error message from body or default to response statusText
-                // handleMessage('Error, Try Again later')
+                localStorage.removeItem('token')
+                setToken(false)
                 
             }else if(response.ok){
                 localStorage.setItem('token', data['access_token'])
                 setShow(false)
                 setToken(true)
+            
+                // request user info
+
+                fetch("http://127.0.0.1:8000/admin_panel/get_user", {method: 'GET', headers: {"Authorization": `Bearer ${data.access}`}}).then(async response => {
+                    const data = await response.json();
+                    // check for error response
+                    if (!response.ok) {
+                        localStorage.removeItem('token')
+                        setToken(false)
+                        
+                    }else if(response.ok){
+                        console.log(data)
+                        localStorage.setItem('user', data[0]['username'])
+                        setUser(true)              
+                    }       
+                })
+                .catch(error => {
+                    localStorage.removeItem('token')
+                    setToken(false)
+                    console.error('There was an error!', error);
+                });
             }       
         })
         .catch(error => {
             console.error('There was an error!', error);
+            localStorage.removeItem('token')
+            setToken(false)
         });
     }
 
     const handleLogout = () => {
         localStorage.removeItem('token')
+        localStorage.removeItem('user')
         setToken(false)
+        setUser(false)
     }
 
     return (
@@ -67,7 +92,8 @@ function Header() {
         <Row className='m-0'>
             <Col xs={4} className="p-2 text-start test-one h4 header-logo my-auto"><img className="App-logo" src={image}></img></Col>
             <Col xs={8} className="p-2 text-end my-auto text-one">
-            <Button variant="link text-decoration-none text-black hover" className='d-inline' >{login ? <div onClick={handleLogout}>Logout</div>: <div onClick={handleShow}>Login</div>}</Button> 
+            <Button variant="link text-decoration-none text-black hover" className='d-inline'>{localStorage.getItem('user')}</Button>
+            <Button variant="link text-decoration-none text-black hover" className='d-inline'>{token ? <div onClick={handleLogout}>Logout</div>: <div onClick={handleShow}>Login</div>}</Button> 
             <Button variant="link text-decoration-none text-black hover" className='d-inline  ms-2'>Signup</Button></Col>
             <Col xs={12} className="logo p-0"><div className='overlay'><img src={logo} alt="logo" /></div></Col>
         </Row>
