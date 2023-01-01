@@ -43,7 +43,7 @@ function Article() {
         </Row> */}
             <div className='h1 text-center mt-5'>DRF AUTHENTIFICATION TESTING</div>
             <div>Admin User: [password: password, username: admin]</div>
-            <div>Test User: [password: testpassword, username: test]</div>
+            <div>Test User: [password: testpassword, username: testuser]</div>
         </div>
     );
 }

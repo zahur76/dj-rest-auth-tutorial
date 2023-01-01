@@ -43,7 +43,7 @@ function Header() {
             'password': password,
         }
         // request sign in token using JWT
-        fetch("http://127.0.0.1:8000/api/token/", {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(data)}).then(async response => {
+        fetch("https://drfapi.theflyu2.com/api/token/", {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(data)}).then(async response => {
             const data = await response.json();
             // check for error response
             if (!response.ok) {
@@ -58,7 +58,7 @@ function Header() {
                 setToken(true)
             
                 // if token created - user exists - get user details and store user details to local storage
-                fetch("http://127.0.0.1:8000/admin_panel/get_user", {method: 'GET', headers: {"Authorization": `Bearer ${data.access}`}}).then(async response => {
+                fetch("https://drfapi.theflyu2.com/admin_panel/get_user", {method: 'GET', headers: {"Authorization": `Bearer ${data.access}`}}).then(async response => {
                     const data = await response.json();
                     // check for error response
                     if (!response.ok) {
