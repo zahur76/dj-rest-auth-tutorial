@@ -4,9 +4,9 @@ import logo from '../media/logo.png'
 import image from '../media/logo.svg'
 import Article from '../Article/Article';
 import Modal from 'react-bootstrap/Modal';
-import { useEffect, useState } from 'react';
-import SignIn from '../SignIn/Signin';
-import GetUser from '../SignIn/Getuser';
+import { useState } from 'react';
+import SignIn from '../Authentification/Signin';
+import GetUser from '../Authentification/Getuser';
 
 function Header() {
 
@@ -19,8 +19,12 @@ function Header() {
 
     const [username, setUsername] = useState(null)
     const [password, setPassword] = useState(null)
+
+    // check to see if signin exists on render by checking of token exists in localstorage
     const [token, setToken] = useState(SignIn())
-    const [user, setUser] = useState(GetUser())
+
+    // check user info stotred in local storage if exists
+    const [user, setUser] = useState(GetUser() ? JSON.parse(localStorage.getItem('user')): null)
  
 
     const handleUsername = (event) => {
@@ -38,32 +42,36 @@ function Header() {
             'username': username,
             'password': password,
         }
-    
+        // request sign in token using JWT
         fetch("http://127.0.0.1:8000/api/token/", {method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}, body: JSON.stringify(data)}).then(async response => {
             const data = await response.json();
             // check for error response
             if (!response.ok) {
                 localStorage.removeItem('token')
                 setToken(false)
+                setShow(false)
                 
             }else if(response.ok){
+                // save token if exists to local storage
                 localStorage.setItem('token', data['access_token'])
                 setShow(false)
                 setToken(true)
             
-                // request user info
-
+                // if token created - user exists - get user details and store user details to local storage
                 fetch("http://127.0.0.1:8000/admin_panel/get_user", {method: 'GET', headers: {"Authorization": `Bearer ${data.access}`}}).then(async response => {
                     const data = await response.json();
                     // check for error response
                     if (!response.ok) {
                         localStorage.removeItem('token')
                         setToken(false)
+                        setShow(false)
+                        console.log('not auto')
                         
                     }else if(response.ok){
                         console.log(data)
-                        localStorage.setItem('user', data[0]['username'])
-                        setUser(true)              
+                        localStorage.setItem('user', JSON.stringify(data[0]))
+                        setUser(data[0])
+                        setShow(false)              
                     }       
                 })
                 .catch(error => {
@@ -92,12 +100,12 @@ function Header() {
         <Row className='m-0'>
             <Col xs={4} className="p-2 text-start test-one h4 header-logo my-auto"><img className="App-logo" src={image}></img></Col>
             <Col xs={8} className="p-2 text-end my-auto text-one">
-            <Button variant="link text-decoration-none text-black hover" className='d-inline'>{localStorage.getItem('user')}</Button>
+            <Button variant="link text-decoration-none text-black hover" className='d-inline'>{user ? user.is_staff ? "admin" : user.username : null}</Button>
             <Button variant="link text-decoration-none text-black hover" className='d-inline'>{token ? <div onClick={handleLogout}>Logout</div>: <div onClick={handleShow}>Login</div>}</Button> 
-            <Button variant="link text-decoration-none text-black hover" className='d-inline  ms-2'>Signup</Button></Col>
+            </Col>
             <Col xs={12} className="logo p-0"><div className='overlay'><img src={logo} alt="logo" /></div></Col>
         </Row>
-        <div className='text-three text-start h6 p-1 text-grey'>Incoporating dj-rest-auth with Django Rest Framework | Jan 2023 | Zahur Meerun</div>
+        {/* <div className='text-three text-start h6 p-1 text-grey'>Incoporating dj-rest-auth with Django Rest Framework | Jan 2023 | Zahur Meerun</div> */}
         <Row className='m-0'>
             <Col className='d-none d-md-block col-md-2'></Col>
             <Col className='col-12 col-md-8'>
